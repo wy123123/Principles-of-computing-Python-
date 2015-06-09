@@ -1,0 +1,196 @@
+"""
+Clone of 2048 game.
+"""
+
+import poc_2048_gui
+import random
+# Directions, DO NOT MODIFY
+UP = 1
+DOWN = 2
+LEFT = 3
+RIGHT = 4
+
+# Offsets for computing tile indices in each direction.
+# DO NOT MODIFY this dictionary.
+OFFSETS = {UP: (1, 0),
+           DOWN: (-1, 0),
+           LEFT: (0, 1),
+           RIGHT: (0, -1)}
+
+def merge(line):
+    """
+    Function that merges a single row or column in 2048.
+    """
+    acopy = []
+    another = []
+    for dummy_i in line:
+        if dummy_i != 0:
+            acopy.append(dummy_i)
+    for dummy_i in range(len(acopy))[:len(acopy)-1]:
+        if (acopy[dummy_i]==acopy[dummy_i+1]) and (acopy[dummy_i] != 0):
+            acopy[dummy_i] = acopy[dummy_i]*2
+            acopy[dummy_i+1] = 0
+        
+    for dummy_i in acopy:
+        if dummy_i != 0:
+            another.append(dummy_i)
+    while len(another) <len(line):
+        another.append(0)
+    return another
+
+
+class TwentyFortyEight:
+    """
+    Class to run the game logic.
+    """
+    def __init__(self, grid_height, grid_width):
+        self._up_=[]
+        self._down_=[]
+        self._left_=[]
+        self._right_=[]
+        for dummy_i in range(grid_width):
+            self._up_.append((0,dummy_i))
+            self._down_.append((grid_height-1,dummy_i))
+        for dummy_i in range(grid_height):
+            self._left_.append((dummy_i,0))
+            self._right_.append((dummy_i,grid_width-1))
+        self._height_ = grid_height
+        self._width_ = grid_width
+        self._cells_ = []
+        self.reset()
+
+
+    def reset(self):
+        """
+        Reset the game so the grid is empty except for two
+        initial tiles.
+        """
+        self._cells_ = [ [0 for dummy_col in range(self._width_)] for dummy_row in range(self._height_)]
+        #two random location
+        self.new_tile()
+        self.new_tile()
+
+    
+    def __str__(self):
+        """
+        Return a string representation of the grid for debugging.
+        """
+        # replace with your code
+        grid_str = ""
+        for row in (self._cells_):
+            grid_str += str(row)
+        return grid_str
+
+
+    def get_grid_height(self):
+        """
+        Get the height of the board.
+        """
+        return self._height_
+
+    def get_grid_width(self):
+        """
+        Get the width of the board.
+        """
+        # replace with your code
+        return self._width_
+
+    def move(self, direction):
+        """
+        Move all tiles in the given direction and add
+        a new tile if any tiles moved.
+        """
+        # replace with your code
+        new_cell=[]
+        moved = False
+        if direction == 1:
+            for starts in range(len(self._up_)):
+                new_cell.append(merge(self.traverse_grid(self._up_[starts],OFFSETS[UP],self._height_,self._cells_)))
+            #check if any tile move
+            for col in range(self._width_):
+                for row in range(self._height_):
+                    if self.get_tile(row,col)!=new_cell[col][row]:
+                        self.set_tile(row,col,new_cell[col][row])	
+                        moved=True
+            
+        elif direction == 3:
+            for starts in range(len(self._left_)):
+                new_cell.append(merge(self.traverse_grid(self._left_[starts],OFFSETS[LEFT],self._width_,self._cells_)))
+            #check if any tile move
+
+            for col in range(self._width_):
+                for row in range(self._height_):
+                    if self.get_tile(row,col) != new_cell[row][col]:
+                        self.set_tile(row,col,new_cell[row][col])
+                        moved = True
+
+        elif direction == 2:
+            for starts in range(len(self._down_)):
+                new_cell.append(merge(self.traverse_grid(self._down_[starts],OFFSETS[DOWN],self._height_,self._cells_)))
+            #check if any tile moved
+            for col in range(self._width_):
+                for row in range(self._height_):
+                    if self.get_tile(self._height_-1-row,col) != new_cell[col][row]:
+                        self.set_tile(self._height_-1-row,col,new_cell[col][row])
+                        moved =True
+
+        elif direction == 4:
+            for starts in range(len(self._right_)):
+                new_cell.append(merge(self.traverse_grid(self._right_[starts],OFFSETS[RIGHT],self._width_,self._cells_)))
+
+            for col in range(self._width_):
+                for row in range(self._height_):
+                    if self.get_tile(row,col) != new_cell[row][self._width_-1-col]:
+                        self.set_tile(row,col,new_cell[row][self._width_-1-col])
+                        moved = True
+        if moved:
+            self.new_tile()
+            
+    def new_tile(self):
+        """
+        Create a new tile in a randomly selected empty
+        square.  The tile should be 2 90% of the time and
+        4 10% of the time.
+        """
+        number = random.randint(0,9)
+        while True:
+            y_axis = random.randint(0,self._height_-1)
+            x_axis = random.randint(0,self._width_-1)
+            if self._cells_[y_axis][x_axis]== 0:
+                break
+        if number ==0:
+            self._cells_[y_axis][x_axis]= 4
+        else:
+            self._cells_[y_axis][x_axis]= 2
+
+    def set_tile(self, row, col, value):
+        """
+        Set the tile at position row, col to have the given value.
+        """
+        self._cells_[row][col] = value
+
+    def get_tile(self, row, col):
+        """
+        Return the value of the tile at position row, col.
+        """
+        return self._cells_[row][col]
+    
+    def traverse_grid(self,start_cell, direction,num_steps,cells):
+        """
+        Function that iterates through the cells in a grid
+        in a linear direction
+    
+        Both start_cell is a tuple(row, col) denoting the
+        starting cell
+    
+        direction is a tuple that contains difference between
+        consecutive cells in the traversal
+        """
+        stringlist = list()
+        for step in range(num_steps):
+            row = start_cell[0] + step*direction[0]
+            col = start_cell[1] + step*direction[1]
+            stringlist.append(cells[row][col])
+        return stringlist
+
+poc_2048_gui.run_gui(TwentyFortyEight(5, 4))
